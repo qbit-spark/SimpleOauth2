@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -45,26 +46,27 @@ public class SecurityConfiguration {
         return configuration.getAuthenticationManager();
     }
 
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf(AbstractHttpConfigurer::disable)
+        httpSecurity
+                .securityMatcher("/api/**", "/images/**", "/jobrunr") // Ensure JWT applies only to API routes
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/v2/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/auth/**").permitAll()
-
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-
                         .requestMatchers("/jobrunr").permitAll()
-
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         httpSecurity.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
     }
+
+
 
 
 }
